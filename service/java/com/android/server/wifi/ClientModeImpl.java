@@ -359,6 +359,8 @@ public class ClientModeImpl extends StateMachine implements ClientMode {
     private DetailedState mNetworkAgentState;
     private final SupplicantStateTracker mSupplicantStateTracker;
 
+    private int mWifiLinkLayerStatsSupported = 4; // Temporary disable
+
     // Indicates that framework is attempting to roam, set true on CMD_START_ROAM, set false when
     // wifi connects or fails to connect
     private boolean mIsAutoRoaming = false;
@@ -1656,9 +1658,12 @@ public class ClientModeImpl extends StateMachine implements ClientMode {
         }
         mLastLinkLayerStatsUpdate = mClock.getWallClockMillis();
         WifiLinkLayerStats stats = null;
-        if (isLinkLayerStatsSupported()) {
+        if (isLinkLayerStatsSupported() && mWifiLinkLayerStatsSupported > 0) {
             if (isPrimary()) {
                 stats = mWifiNative.getWifiLinkLayerStats(mInterfaceName);
+                if (stats == null) {
+                    mWifiLinkLayerStatsSupported -= 1;
+                }
             } else {
                 if (mVerboseLoggingEnabled) {
                     Log.w(getTag(), "Can't getWifiLinkLayerStats on secondary iface");
